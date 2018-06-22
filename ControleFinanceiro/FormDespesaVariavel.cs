@@ -25,53 +25,42 @@ namespace ControleFinanceiro
             //LoadFormasPagamento();
         }
 
-        private async void DespesaVariavel_Load(object sender, EventArgs e)
+        private void DespesaVariavel_Load(object sender, EventArgs e)
         {
+            LoadAutoCompleteDescricao();
             
-            var resultado = await TesteAsync();
-
-            tbxDescricao.AutoCompleteCustomSource.Clear();
-            tbxDescricao.AutoCompleteCustomSource.AddRange(resultado);
         }
 
         private async Task<string[]> GetDescriptions()
         {
+            // Tarefa para pegar as descrições e retornar para carregar o autocomplete do textbox
             var task = Task.Factory.StartNew(() =>
             {
                 using (var context = new FinanceModel())
                 {
                     return context.VariableExpenses.ToList().Select(v => v.Description).Distinct().ToArray();
-
-                    //tbxDescricao.AutoCompleteCustomSource.Clear();
-                    //tbxDescricao.AutoCompleteCustomSource.AddRange(descriptions);
                 }
             });
 
             return await task;
         }
 
-        private void LoadAutoCompleteDescricao(string[] descriptions)
+        private async void LoadAutoCompleteDescricao()
         {
+            //Desabilitando e animando o textbox
+            tbxDescricao.Enabled = false;
+            tbxDescricao.Text = "Carregando....";
 
+            // Pegando as descrições da base de dados e carregndo no auto complete do textbox
+            var resultado = await GetDescriptions();
+            
+            tbxDescricao.AutoCompleteCustomSource.Clear();
+            tbxDescricao.AutoCompleteCustomSource.AddRange(resultado);
 
+            // Voltando o textbox ao estado inicial
+            tbxDescricao.Text = "";
+            tbxDescricao.Enabled = true;
 
-            //using (var context = new FinanceModel())
-            //{
-            //    string[] descriptions = context.VariableExpenses.ToList().Select(v => v.Description).Distinct().ToArray();
-
-            //    tbxDescricao.AutoCompleteCustomSource.Clear();
-            //    tbxDescricao.AutoCompleteCustomSource.AddRange(descriptions);
-            //}
-
-            //using (var context = new ControleFinanceiroContext())
-            //{
-            //    string[] descricoes = context.DespesaVariavel.ToList().Select(x => x.Descr).Distinct().ToArray();
-
-            //    tbxDescricao.AutoCompleteCustomSource.Clear();
-            //    tbxDescricao.AutoCompleteCustomSource.AddRange(descricoes);
-
-            //}
-        
         }
 
         public void LoadAutoCompleteLocais()
@@ -212,8 +201,8 @@ namespace ControleFinanceiro
 
                     
 
-                    LoadAutoCompleteDescricao();
-                    LoadAutoCompleteLocais();
+                    //LoadAutoCompleteDescricao();
+                    //LoadAutoCompleteLocais();
 
                     MessageBox.Show("Despesa inserida com sucesso!");
                 }
