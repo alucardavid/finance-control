@@ -20,15 +20,14 @@ namespace ControleFinanceiro
         public FormDespesaVariavel()
         {
             InitializeComponent();
-            //LoadAutoCompleteDescricao();
             //LoadAutoCompleteLocais();
             //LoadFormasPagamento();
         }
 
         private void DespesaVariavel_Load(object sender, EventArgs e)
         {
+            LoadAutoCompleteLocais();
             LoadAutoCompleteDescricao();
-            
         }
 
         private async Task<string[]> GetDescriptions()
@@ -45,11 +44,24 @@ namespace ControleFinanceiro
             return await task;
         }
 
+        private async Task<string[]> GetLocals()
+        {
+            var task = Task.Factory.StartNew(() =>
+            {
+                using (var context = new FinanceModel())
+                {
+                    return context.VariableExpenses.ToList().Select(v => v.Place).Distinct().ToArray();
+                }
+            });
+
+            return await task;
+        } 
+
         private async void LoadAutoCompleteDescricao()
         {
             //Desabilitando e animando o textbox
             tbxDescricao.Enabled = false;
-            tbxDescricao.Text = "Carregando....";
+            tbxDescricao.Text = "Loading....";
 
             // Pegando as descrições da base de dados e carregndo no auto complete do textbox
             var resultado = await GetDescriptions();
@@ -63,25 +75,22 @@ namespace ControleFinanceiro
 
         }
 
-        public void LoadAutoCompleteLocais()
+        public async void LoadAutoCompleteLocais()
         {
-            using (var context = new FinanceModel())
-            {
-                string[] places = context.VariableExpenses.ToList().Select(v => v.Place).Distinct().ToArray();
+            //Desabilitando e animando o textbox
+            tbxLocal.Enabled = false;
+            tbxLocal.Text = "Loading...";
 
-                tbxLocal.AutoCompleteCustomSource.Clear();
-                tbxLocal.AutoCompleteCustomSource.AddRange(places);
+            // Pegando as descrições da base de dados e carregndo no auto complete do textbox
+            var locals = await GetLocals();
 
-            }
+            tbxLocal.AutoCompleteCustomSource.Clear();
+            tbxLocal.AutoCompleteCustomSource.AddRange(locals);
 
-            //using (var context = new ControleFinanceiroContext())
-            //{
-            //    string[] locais = context.DespesaVariavel.ToList().Select(x => x.Local).Distinct().ToArray();
-
-            //    tbxLocal.AutoCompleteCustomSource.Clear();
-            //    tbxLocal.AutoCompleteCustomSource.AddRange(locais);
-                
-            //}
+            // Voltando o textbox ao estado inicial
+            tbxLocal.Text = "";
+            tbxLocal.Enabled = true;
+            
         }
 
         public void LoadFormasPagamento()
