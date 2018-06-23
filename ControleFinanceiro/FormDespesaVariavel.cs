@@ -120,30 +120,28 @@ namespace ControleFinanceiro
             
         }
 
-        private async Task<string> SaveExpense()
+        private async Task<string> SaveExpense(string place, string description, decimal value, DateTime date, string type, FormOfPayment selFormPayment )
         {
             var task = Task.Factory.StartNew(() => {
-                if (validarCampos())
-                {
                     using (var context = new FinanceModel())
                     {
-                        var formOfPayment = context.FormOfPayments.First(f => f.Id == ((FormOfPayment)cbFormaPgmt.SelectedItem).Id);
+                        var formOfPayment = context.FormOfPayments.First(f => f.Id == selFormPayment.Id);
                         var balance = context.Balances.First(b => b.Id == formOfPayment.Balance_Id);
                         var user = context.Users.First(u => u.CPF == "39174716808");
 
                         var expense = new VariableExpense()
                         {
-                            Place = tbxLocal.Text,
-                            Description = tbxDescricao.Text,
+                            Place = place,
+                            Description = description,
                             FormOfPayment = formOfPayment,
-                            Value = decimal.Parse(tbxValor.Text),
-                            Date = DateTime.Parse(mcData.SelectionRange.Start.ToShortDateString()),
-                            Type = cbTipo.SelectedItem.ToString(),
+                            Value = value,
+                            Date = date,
+                            Type = type,
                             CreatedAt = DateTime.Now,
                             User = user
                         };
 
-                        if (cbTipo.SelectedItem.ToString().Contains("Despesa"))
+                        if (type.Contains("Despesa"))
                         {
                             balance.Value -= (double)expense.Value;
                         }
@@ -152,25 +150,15 @@ namespace ControleFinanceiro
                             balance.Value += (double)expense.Value;
                         }
 
-                        try
-                        {
-                            context.VariableExpenses.Add(expense);
-                            context.SaveChanges();
-                        }
-                        catch (Exception ex)
-                        {
-                            MessageBox.Show(ex.Message);
-                        }
+                        context.VariableExpenses.Add(expense);
+                        context.SaveChanges();
 
-
-                        MessageBox.Show("Despesa inserida com sucesso!");
+                        return "Despesa inserida com sucesso!";
                     }
-                }
-                else
-                {
-                    return "Campos precisam estar corretos"
-                }
+                
             });
+
+            return await task;
         }
 
         private bool validarCampos()
@@ -211,9 +199,39 @@ namespace ControleFinanceiro
             }
         }
 
-        private void btnSalvar_Click(object sender, EventArgs e)
+        private async void btnSalvar_Click(object sender, EventArgs e)
         {
-            
+            string msgRetorno;
+
+            // Desabilitar o botão salvar para evitar dois cliques
+            btnSalvar.Enabled = false;
+
+            try
+            {
+                if (validarCampos())
+                {
+                    msgRetorno = await SaveExpense(
+                            tbxLocal.Text,
+                            tbxDescricao.Text,
+                            decimal.Parse(tbxValor.Text),
+                            DateTime.Parse(mcData.SelectionRange.Start.ToShortDateString()),
+                            cbTipo.SelectedItem.ToString(),
+                            (FormOfPayment)cbFormaPgmt.SelectedItem
+                        );
+                }
+                else
+                {
+                    msgRetorno = "Campos precisam estar corretos";
+                }
+            }
+            catch (Exception ex)
+            {
+                msgRetorno = ex.Message;
+            }
+
+            btnSalvar.Enabled = true;
+
+            MessageBox.Show(msgRetorno);
 
         }
 
