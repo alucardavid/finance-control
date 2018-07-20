@@ -144,6 +144,7 @@ namespace ControleFinanceiro
                         if (type.Contains("Despesa"))
                         {
                             balance.Value -= (double)expense.Value;
+                            balance.UpdatedAt = DateTime.Now;
                         }
                         else
                         {
